@@ -2,7 +2,7 @@ import { ethers } from "ethers";
 import { useCallback, useEffect, useState } from "react";
 import WavePortalABI from "../abi/WavePortal.json";
 
-const CONTRACT_ADDR = "0x0a356376a2C71f0430E309c864dE8F7ad5C67Be2";
+const CONTRACT_ADDR = "0xbF052AA688272c95923F3E53ab7af189d3574481";
 
 const checkIfWalletConnected = () => {
   const { ethereum } = window;
@@ -91,7 +91,7 @@ export const useContract = (provider) => {
           let count = await contract.getTotalWaves();
           console.log("Retrieved total wave count...", count.toNumber());
 
-          const waveTxn = await contract.wave(content);
+          const waveTxn = await contract.wave(content, { gasLimit: 300000 });
           console.log("Mining...", waveTxn.hash);
 
           await waveTxn.wait();
@@ -120,5 +120,25 @@ export const useContract = (provider) => {
     return [];
   }, [contract]);
 
-  return { wave, getAllWaves };
+  const subscribeNewWave = useCallback(
+    async (fn) => {
+      if (contract) {
+        contract.on("NewWave", fn);
+      }
+      return [];
+    },
+    [contract]
+  );
+
+  const unSubscribeNewWave = useCallback(
+    async (fn) => {
+      if (contract) {
+        contract.off("NewWave", fn);
+      }
+      return [];
+    },
+    [contract]
+  );
+
+  return { wave, getAllWaves, subscribeNewWave,unSubscribeNewWave };
 };

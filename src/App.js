@@ -4,19 +4,35 @@ import { useContract, useWeb3 } from "./hooks/useWeb3";
 
 export default function App() {
   const { account, provider, connect } = useWeb3();
-  const { wave, getAllWaves } = useContract(provider);
+  const { wave, getAllWaves, subscribeNewWave, unSubscribeNewWave } =
+    useContract(provider);
   const [waves, setWaves] = React.useState([]);
   const [inputText, setInputText] = React.useState("");
 
+  const onNewWave = (from, timestamp, message) => {
+    console.log("NewWave", from, timestamp, message);
+    setWaves((prev) => [
+      ...prev,
+      {
+        address: from,
+        timestamp: new Date(timestamp * 1000),
+        message: message,
+      },
+    ]);
+  };
   React.useEffect(() => {
     const getData = async () => {
       if (account) {
         const data = await getAllWaves();
         setWaves(data);
+        subscribeNewWave(onNewWave);
       }
     };
     getData();
-  }, [account, getAllWaves]);
+    return () => {
+      unSubscribeNewWave(onNewWave);
+    };
+  }, [account, getAllWaves, subscribeNewWave]);
 
   const onInput = (e) => {
     setInputText(e.target.value);
