@@ -1,9 +1,10 @@
 import * as React from "react";
-import { ethers } from "ethers";
 import "./App.css";
+import { useContract, useWeb3 } from "./hooks/useWeb3";
 
 export default function App() {
-  const wave = () => {};
+  const { account, provider, connect } = useWeb3();
+  const { wave } = useContract(provider);
 
   return (
     <div className="mainContainer">
@@ -17,6 +18,11 @@ export default function App() {
         <button className="waveButton" onClick={wave}>
           Wave!
         </button>
+        {!account && (
+          <button className="waveButton" onClick={connect}>
+            Connect Wallet
+          </button>
+        )}
       </div>
     </div>
   );
