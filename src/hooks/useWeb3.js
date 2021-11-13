@@ -2,7 +2,7 @@ import { ethers } from "ethers";
 import { useCallback, useEffect, useState } from "react";
 import WavePortalABI from "../abi/WavePortal.json";
 
-const CONTRACT_ADDR = "0x9a431fBd8c8E2B14943D7d15dC69Ea5b5510e9cB";
+const CONTRACT_ADDR = "0x0a356376a2C71f0430E309c864dE8F7ad5C67Be2";
 
 const checkIfWalletConnected = () => {
   const { ethereum } = window;
@@ -78,24 +78,47 @@ export const useContract = (provider) => {
         signer
       );
       setContract(wavePortalContract);
+      console.log("Succesfully setup contract.");
     } else {
       console.log("Ethereum contract does not exists.");
     }
   }, [provider]);
 
-  const wave = useCallback(async () => {
-    let count = await contract.getTotalWaves();
-    console.log("Retrieved total wave count...", count.toNumber());
+  const wave = useCallback(
+    async (content) => {
+      if (contract) {
+        try {
+          let count = await contract.getTotalWaves();
+          console.log("Retrieved total wave count...", count.toNumber());
 
-    const waveTxn = await contract.wave();
-    console.log("Mining...", waveTxn.hash);
+          const waveTxn = await contract.wave(content);
+          console.log("Mining...", waveTxn.hash);
 
-    await waveTxn.wait();
-    console.log("Mined -- ", waveTxn.hash);
+          await waveTxn.wait();
+          console.log("Mined -- ", waveTxn.hash);
 
-    count = await contract.getTotalWaves();
-    console.log("Retrieved total wave count...", count.toNumber());
+          count = await contract.getTotalWaves();
+          console.log("Retrieved total wave count...", count.toNumber());
+        } catch (err) {
+          console.error("Transaction failed: ", err);
+        }
+      }
+    },
+    [contract]
+  );
+
+  const getAllWaves = useCallback(async () => {
+    if (contract) {
+      const waves = await contract.getAllWaves();
+      const wavesCleaned = waves.map((wave) => ({
+        address: wave.waver,
+        timestamp: new Date(wave.timestamp * 1000),
+        message: wave.message,
+      }));
+      return wavesCleaned;
+    }
+    return [];
   }, [contract]);
 
-  return { wave };
+  return { wave, getAllWaves };
 };

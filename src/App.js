@@ -4,7 +4,29 @@ import { useContract, useWeb3 } from "./hooks/useWeb3";
 
 export default function App() {
   const { account, provider, connect } = useWeb3();
-  const { wave } = useContract(provider);
+  const { wave, getAllWaves } = useContract(provider);
+  const [waves, setWaves] = React.useState([]);
+  const [inputText, setInputText] = React.useState("");
+
+  React.useEffect(() => {
+    const getData = async () => {
+      if (account) {
+        const data = await getAllWaves();
+        setWaves(data);
+      }
+    };
+    getData();
+  }, [account, getAllWaves]);
+
+  const onInput = (e) => {
+    setInputText(e.target.value);
+  };
+  const onSubmit = async () => {
+    if (inputText.length > 0) {
+      await wave(inputText);
+      setInputText("");
+    }
+  };
 
   return (
     <div className="mainContainer">
@@ -14,8 +36,18 @@ export default function App() {
         <div className="bio">
           Connect your Ethereum wallet and wave to anyone!
         </div>
+        <input
+          type="text"
+          value={inputText}
+          onChange={onInput}
+          style={{
+            backgroundColor: "OldLace",
+            marginTop: "16px",
+            padding: "8px",
+          }}
+        />
 
-        <button className="waveButton" onClick={wave}>
+        <button className="waveButton" onClick={onSubmit}>
           Wave!
         </button>
         {!account && (
@@ -23,6 +55,23 @@ export default function App() {
             Connect Wallet
           </button>
         )}
+
+        {waves.map((w, index) => {
+          return (
+            <div
+              key={index}
+              style={{
+                backgroundColor: "OldLace",
+                marginTop: "16px",
+                padding: "8px",
+              }}
+            >
+              <div>Address: {w.address}</div>
+              <div>Time: {w.timestamp.toString()}</div>
+              <div>Message: {w.message} </div>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
